@@ -1,0 +1,8 @@
+billing_account = "123456-789012-345678"
+
+ssh-auth-key = "ssh-ed25519 key host"
+
+wg_priv_key = "secret"
+wg_peers    = [
+    "PublicKey = peerkey\nAllowedIPs = 10.200.1.50/32"
+]

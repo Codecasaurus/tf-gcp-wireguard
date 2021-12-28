@@ -1,0 +1,32 @@
+#cloud-config
+users:
+  - name: wg
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    groups: sudo
+    shell: /bin/bash
+    ssh-authorized-keys:
+      - "${ssh-auth-key}"
+ssh:
+  emit_keys_to_console: false
+bootcmd:
+  - "curl https://packages.cloud.google.com/apt/doc/apt-key.gpg| gpg --dearmor > /usr/share/keyrings/google-cloud-archive-keyring.gpg"
+apt:
+  sources:
+    gcsfuse.list:
+      source: "deb [signed-by=/usr/share/keyrings/google-cloud-archive-keyring.gpg] http://packages.cloud.google.com/apt gcsfuse-focal main"
+package_upgrade: true
+packages:
+  - wireguard
+  - iptables
+  - gcsfuse
+write_files:
+  - path: /etc/sysctl.d/50-wireguard.conf
+    permissions: "0644"
+    content: |
+      net.ipv4.ip_forward=1
+      net.ipv6.conf.all.forwarding=1
+runcmd:
+  - gcsfuse --only-dir ${instance-name} --file-mode 600 ${bucket} /etc/wireguard/
+  - [sysctl, -p, /etc/sysctl.d/50-wireguard.conf]
+  - [systemctl, daemon-reload]
+  - [systemctl, enable, --now, --no-block, "wg-quick@${service-name}.service"]
